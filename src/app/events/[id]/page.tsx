@@ -3,90 +3,104 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { FaArrowLeft, FaCalendarAlt, FaMapMarkerAlt, FaClock, FaUsers } from 'react-icons/fa';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { useAuth, useLocalStorage } from '@/lib/hooks';
-import { Event, Student, StudentRegistration } from '@/lib/types';
+import { useAuth } from '@/lib/hooks';
+import { Event, StudentRegistration } from '@/lib/types';
 
 export default function EventPage({ params }: { params: { id: string } }) {
   const { id } = params;
   const router = useRouter();
-  const { user, setUser } = useAuth();
-  const [events, setEvents] = useLocalStorage<Event[]>('pccoe_events', []);
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [event, setEvent] = useState<Event | null>(null);
   const [isRegistered, setIsRegistered] = useState(false);
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
+  const [registrationError, setRegistrationError] = useState<string | null>(null);
 
+  // Fetch event details and check registration status
   useEffect(() => {
-    if (!user) {
-      router.push('/auth/login');
+    async function fetchEventDetails() {
+      try {
+        // Fetch event details from API
+        const response = await fetch(`/api/events/${id}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch event details');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.event) {
+          setEvent(data.event);
+          
+          // Check if current user is registered for this event
+          if (user && user.registeredEvents && user.registeredEvents.includes(id)) {
+            setIsRegistered(true);
+          }
+        } else {
+          router.push('/events');
+        }
+      } catch (error) {
+        console.error('Error fetching event details:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (id) {
+      fetchEventDetails();
+    }
+  }, [id, user, router]);
+
+  const handleRegister = async () => {
+    if (!user || !event) {
+      // If not logged in, redirect to login
+      if (!user) {
+        router.push('/auth/login');
+      }
       return;
     }
-
-    const foundEvent = events.find(event => event._id === id);
-    
-    if (foundEvent) {
-      setEvent(foundEvent);
-      
-      // Check if current user is registered for this event
-      if (user.registeredEvents && foundEvent._id && user.registeredEvents.includes(foundEvent._id)) {
-        setIsRegistered(true);
-      }
-    } else {
-      // Event not found
-      router.push('/events');
-    }
-    
-    setLoading(false);
-  }, [id, user, router, events]);
-
-  const handleRegister = () => {
-    if (!user || !event) return;
     
     setIsRegisterLoading(true);
+    setRegistrationError(null);
     
-    // Simulate API call delay
-    setTimeout(() => {
-      try {
-        // Add user to event's registered students
-        const registration: StudentRegistration = {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          prn: user.prn || 'N/A',
-          class: user.class || 'N/A',
-          division: user.division || 'N/A',
-          department: user.department || 'N/A',
-          registrationDate: new Date().toISOString()
-        };
-        
-        const updatedEvent = {
-          ...event,
-          registeredStudents: [
-            ...event.registeredStudents,
-            registration
-          ]
-        };
-        
-        // Update events array
-        setEvents(events.map(e => e._id === event._id ? updatedEvent : e));
-        
-        // Update user's registered events
-        const updatedUser: Student = {
-          ...user,
-          registeredEvents: [...(user.registeredEvents || []), event._id as string]
-        };
-        setUser(updatedUser);
-        
+    try {
+      // Register for event via API
+      const response = await fetch(`/api/events/${id}/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user._id,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
         setIsRegistered(true);
-      } catch (error) {
-        console.error("Registration failed:", error);
-      } finally {
-        setIsRegisterLoading(false);
+        
+        // Refresh event data to show updated registration count
+        const updatedEventResponse = await fetch(`/api/events/${id}`);
+        if (updatedEventResponse.ok) {
+          const updatedData = await updatedEventResponse.json();
+          if (updatedData.success && updatedData.event) {
+            setEvent(updatedData.event);
+          }
+        }
+      } else {
+        setRegistrationError(data.message || 'Failed to register for event');
       }
-    }, 1000);
+    } catch (error) {
+      console.error("Registration failed:", error);
+      setRegistrationError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsRegisterLoading(false);
+    }
   };
 
   if (loading) {
@@ -110,8 +124,9 @@ export default function EventPage({ params }: { params: { id: string } }) {
     day: 'numeric'
   });
   
-  const isEventFull = event.registeredStudents.length >= event.capacity;
+  const isEventFull = event.registeredStudents?.length >= event.capacity;
   const isEventPassed = new Date(event.date) < new Date();
+  const isDeadlinePassed = new Date(event.registrationDeadline) < new Date();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -128,12 +143,16 @@ export default function EventPage({ params }: { params: { id: string } }) {
           
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="relative">
-              <div className="h-64 w-full overflow-hidden">
-                <img 
-                  src={event.image || '/images/event-placeholder.jpg'} 
-                  alt={event.title}
-                  className="w-full h-full object-cover"
-                />
+              <div className="h-64 w-full overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5">
+                <div className="w-full h-full flex items-center justify-center">
+                  <Image
+                    src={event.image || `/images/${event.category}-event.svg`}
+                    alt={event.title}
+                    width={300}
+                    height={300}
+                    className="object-contain"
+                  />
+                </div>
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end">
                 <div className="p-6 text-white">
@@ -185,7 +204,7 @@ export default function EventPage({ params }: { params: { id: string } }) {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Registrations</p>
-                    <p className="font-medium">{event.registeredStudents.length} / {event.capacity}</p>
+                    <p className="font-medium">{event.registeredStudents?.length || 0} / {event.capacity}</p>
                   </div>
                 </div>
               </div>
@@ -196,6 +215,19 @@ export default function EventPage({ params }: { params: { id: string } }) {
                   <p>{event.description}</p>
                 </div>
               </div>
+              
+              {event.targetDepartment && (
+                <div className="mb-8 bg-blue-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-medium text-blue-800">Department-Specific Event</h3>
+                  <p className="text-blue-700">This event is specifically for students from the {event.targetDepartment} department.</p>
+                </div>
+              )}
+              
+              {registrationError && (
+                <div className="mb-8 bg-red-50 p-4 rounded-lg">
+                  <p className="text-red-700">{registrationError}</p>
+                </div>
+              )}
               
               <div className="flex justify-center">
                 {isRegistered ? (
@@ -209,10 +241,18 @@ export default function EventPage({ params }: { params: { id: string } }) {
                   <div className="bg-gray-100 text-gray-800 px-6 py-4 rounded-lg">
                     This event has already taken place.
                   </div>
+                ) : isDeadlinePassed ? (
+                  <div className="bg-red-100 text-red-800 px-6 py-4 rounded-lg">
+                    Registration deadline has passed.
+                  </div>
                 ) : isEventFull ? (
                   <div className="bg-red-100 text-red-800 px-6 py-4 rounded-lg">
                     Registration closed - Event is at full capacity.
                   </div>
+                ) : !user ? (
+                  <Link href={`/auth/login?redirect=/events/${id}`} className="btn-primary w-full max-w-md py-3 flex justify-center items-center">
+                    Log in to Register
+                  </Link>
                 ) : (
                   <button
                     onClick={handleRegister}
