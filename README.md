@@ -82,3 +82,65 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Built for Pimpri Chinchwad College of Engineering, Pune
 - Made with ❤️ by PCCOE students 
+
+## Deployment
+
+### Deploying to Vercel
+
+This application is optimized for deployment on Vercel. Follow these steps to deploy:
+
+1. **Create a Vercel Account**: If you don't have one, sign up at [vercel.com](https://vercel.com).
+
+2. **Install Vercel CLI**: Install the Vercel CLI globally:
+   ```bash
+   npm install -g vercel
+   ```
+
+3. **Login to Vercel**: Run the following command and follow the instructions:
+   ```bash
+   vercel login
+   ```
+
+4. **Configure MongoDB**: 
+   - Create a MongoDB Atlas account and set up a cluster
+   - Create a `.env` file based on the `.env.example` template
+   - Add your MongoDB connection string
+
+5. **Deploy to Vercel**:
+   ```bash
+   vercel
+   ```
+
+6. **Set Environment Variables**: 
+   - In the Vercel dashboard, go to your project settings
+   - Add the MONGODB_URI environment variable with your MongoDB connection string
+   - Optionally set other environment variables as needed
+
+7. **Configure Deployment Settings**: 
+   - Set the correct framework preset to Next.js
+   - Configure your build settings if needed
+
+### Alternative Deployment Options
+
+#### Deploy to Heroku
+
+1. Create a Heroku account at [heroku.com](https://heroku.com)
+2. Install the Heroku CLI and login
+3. Create a new Heroku app: `heroku create pccoe-events`
+4. Add MongoDB add-on or set environment variables for external MongoDB
+5. Push to Heroku: `git push heroku main`
+
+#### Self-Hosting
+
+1. Build the application: `npm run build`
+2. Start the server: `npm start`
+3. Consider using PM2 for process management in production
+
+## Export Functionality
+
+The application includes functionality to export student data in CSV and PDF formats:
+
+- **CSV Export**: Exports a spreadsheet with student information
+- **PDF Export**: Generates a formatted PDF document with student data
+
+This feature is available to administrators from the dashboard. 

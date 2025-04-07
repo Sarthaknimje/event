@@ -3,13 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FaPlus, FaUsers, FaCalendarAlt, FaChartBar, FaSignOutAlt, FaEdit } from 'react-icons/fa';
+import { FaPlus, FaUsers, FaCalendarAlt, FaChartBar, FaSignOutAlt, FaEdit, FaDownload, FaFileExport, FaFileCsv, FaFilePdf } from 'react-icons/fa';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuth, useLocalStorage } from '@/lib/hooks';
 import { Event, EventStats, Student } from '@/lib/types';
 import { Chart as ChartJS, ArcElement, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Pie, Bar } from 'react-chartjs-2';
+import { convertToCSV, downloadCSV, downloadPDF } from '@/lib/exportUtils';
+import { motion } from 'framer-motion';
 
 // Register ChartJS components
 ChartJS.register(ArcElement, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
@@ -21,6 +23,8 @@ export default function AdminDashboard() {
   const [events] = useLocalStorage<Event[]>('pccoe_events', []);
   const [stats, setStats] = useState<EventStats | null>(null);
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
+  const [allStudents, setAllStudents] = useState<Student[]>([]);
+  const [isExporting, setIsExporting] = useState(false);
   
   useEffect(() => {
     if (!user) {
@@ -38,6 +42,9 @@ export default function AdminDashboard() {
     if (events.length > 0) {
       calculateStats();
     }
+    
+    // Fetch all students
+    fetchAllStudents();
     
     setIsLoading(false);
   }, [user, router, events]);
@@ -112,6 +119,60 @@ export default function AdminDashboard() {
     });
     
     setCategoryCounts(categoriesData);
+  };
+  
+  // Fetch all students from the API
+  const fetchAllStudents = async () => {
+    try {
+      const response = await fetch('/api/users/export');
+      if (!response.ok) {
+        throw new Error('Failed to fetch students');
+      }
+      
+      const data = await response.json();
+      if (data.success && data.students) {
+        setAllStudents(data.students);
+      }
+    } catch (error) {
+      console.error('Error fetching students:', error);
+    }
+  };
+  
+  // Export students data as CSV
+  const handleExportCSV = () => {
+    if (allStudents.length === 0) {
+      alert('No student data available to export.');
+      return;
+    }
+    
+    setIsExporting(true);
+    try {
+      const csvContent = convertToCSV(allStudents);
+      downloadCSV(csvContent, 'pccoe-students-data.csv');
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+      alert('Failed to export data as CSV. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+  
+  // Export students data as PDF
+  const handleExportPDF = () => {
+    if (allStudents.length === 0) {
+      alert('No student data available to export.');
+      return;
+    }
+    
+    setIsExporting(true);
+    try {
+      downloadPDF(allStudents, 'pccoe-students-data.pdf');
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      alert('Failed to export data as PDF. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
   };
   
   const handleLogout = () => {
@@ -212,11 +273,33 @@ export default function AdminDashboard() {
               Administrator Dashboard
             </h1>
             
-            <div className="flex space-x-4">
+            <div className="flex flex-wrap gap-4">
               <Link href="/admin/events/create" className="btn-primary flex items-center">
                 <FaPlus className="mr-2" />
                 Create Event
               </Link>
+              <div className="flex space-x-2">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleExportCSV}
+                  disabled={isExporting || allStudents.length === 0}
+                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-400"
+                >
+                  <FaFileCsv className="mr-2" />
+                  {isExporting ? 'Exporting...' : 'Export CSV'}
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleExportPDF}
+                  disabled={isExporting || allStudents.length === 0}
+                  className="flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:bg-gray-400"
+                >
+                  <FaFilePdf className="mr-2" />
+                  {isExporting ? 'Exporting...' : 'Export PDF'}
+                </motion.button>
+              </div>
               <button
                 onClick={handleLogout}
                 className="flex items-center px-4 py-2 border border-red-300 text-red-600 rounded-md hover:bg-red-50 transition-colors"
@@ -259,11 +342,9 @@ export default function AdminDashboard() {
                   <FaChartBar className="h-6 w-6 text-accent" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-700">Avg. Registrations/Event</h3>
+                  <h3 className="text-lg font-semibold text-gray-700">Registered Students</h3>
                   <p className="text-3xl font-bold text-accent">
-                    {events.length > 0 
-                      ? Math.round((stats?.totalRegistrations || 0) / events.length) 
-                      : 0}
+                    {allStudents.filter(s => s.role === 'student').length}
                   </p>
                 </div>
               </div>
