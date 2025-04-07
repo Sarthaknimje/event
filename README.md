@@ -91,34 +91,53 @@ This application is optimized for deployment on Vercel. Follow these steps to de
 
 1. **Create a Vercel Account**: If you don't have one, sign up at [vercel.com](https://vercel.com).
 
-2. **Install Vercel CLI**: Install the Vercel CLI globally:
-   ```bash
-   npm install -g vercel
-   ```
+2. **Push to GitHub**: Make sure your project is pushed to a GitHub repository.
 
-3. **Login to Vercel**: Run the following command and follow the instructions:
-   ```bash
-   vercel login
-   ```
+3. **Connect to Vercel**:
+   - Log in to Vercel and click "Import Project"
+   - Select your GitHub repository 
+   - Select the "Next.js" framework preset
 
-4. **Configure MongoDB**: 
-   - Create a MongoDB Atlas account and set up a cluster
-   - Create a `.env` file based on the `.env.example` template
-   - Add your MongoDB connection string
+4. **Set Environment Variables**:
+   In the Vercel deployment settings, add the following environment variables:
+   - `MONGODB_URI`: Your MongoDB Atlas connection string (format: `mongodb+srv://username:password@cluster.mongodb.net/pccoe_events?retryWrites=true&w=majority`)
+   - `NEXTAUTH_SECRET`: A random secure string for session encryption (you can generate one with `openssl rand -base64 32`)
+   - `NEXTAUTH_URL`: Your Vercel deployment URL (e.g., `https://your-app-name.vercel.app`)
 
-5. **Deploy to Vercel**:
-   ```bash
-   vercel
-   ```
+5. **Deploy**:
+   - Click "Deploy" and wait for the build to complete
+   - Vercel will automatically build and deploy your application
 
-6. **Set Environment Variables**: 
-   - In the Vercel dashboard, go to your project settings
-   - Add the MONGODB_URI environment variable with your MongoDB connection string
-   - Optionally set other environment variables as needed
+### Setting up MongoDB Atlas for Production
 
-7. **Configure Deployment Settings**: 
-   - Set the correct framework preset to Next.js
-   - Configure your build settings if needed
+1. **Create MongoDB Atlas Account**: 
+   - Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) and sign up or log in
+   - Create a new cluster (the free tier is sufficient to start)
+
+2. **Configure Database Access**:
+   - Go to "Database Access" and create a new database user with a secure password
+   - Assign read/write permissions to this user
+
+3. **Configure Network Access**:
+   - Go to "Network Access" and add a new IP address
+   - For development, you can allow access from anywhere (`0.0.0.0/0`)
+   - For more security, restrict to Vercel IP addresses
+
+4. **Get Connection String**:
+   - Click "Connect" on your cluster
+   - Select "Connect your application"
+   - Copy the connection string and replace `<username>`, `<password>`, and `<dbname>` with your credentials and database name (`pccoe_events`)
+
+### Testing Your Deployment
+
+After deploying to Vercel, you can test the API endpoints using the provided script:
+
+```bash
+chmod +x test-deployment.sh
+./test-deployment.sh https://your-vercel-app-url.vercel.app
+```
+
+This script will check all endpoints for correct responses and help ensure your deployment is working properly.
 
 ### Alternative Deployment Options
 

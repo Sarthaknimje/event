@@ -1,25 +1,34 @@
-import { auth } from '@/auth';
-import { redirect } from 'next/navigation';
+'use client';
 
-export default async function Dashboard() {
-  const session = await auth();
-  const user = session?.user;
+import { useAuth } from '@/lib/hooks';
+import { useEffect } from 'react';
+import { redirect, useRouter } from 'next/navigation';
 
-  if (!user) {
-    redirect('/auth/login');
-  }
+export default function Dashboard() {
+  const { user } = useAuth();
+  const router = useRouter();
 
-  // Redirect based on user role
-  if (user.role === 'admin') {
-    redirect('/admin/dashboard');
-  } else {
-    redirect('/student/dashboard');
-  }
+  useEffect(() => {
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
 
-  // This part won't execute due to redirects above
+    // Redirect based on user role
+    if (user.role === 'admin') {
+      router.push('/admin/dashboard');
+    } else {
+      router.push('/student/dashboard');
+    }
+  }, [user, router]);
+
+  // This component shows during the brief moment before redirect
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Redirecting to your dashboard...</h1>
+    <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold mb-6">Redirecting to your dashboard...</h1>
+        <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
+      </div>
     </div>
   );
 }

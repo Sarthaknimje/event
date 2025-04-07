@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { FaCalendarAlt, FaMapMarkerAlt, FaSearch, FaFilter, FaSort, FaUserFriends, FaInfoCircle, FaClock } from 'react-icons/fa';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { useLocalStorage } from '@/lib/hooks';
-import { Event } from '@/lib/types';
+import { useLocalStorage, useAuth } from '@/lib/hooks';
+import { Event, Student } from '@/lib/types';
 import { motion } from 'framer-motion';
 
 export default function EventsPage() {
@@ -19,6 +19,7 @@ export default function EventsPage() {
   const [sortBy, setSortBy] = useState('date');
   
   const [storedEvents] = useLocalStorage<Event[]>('pccoe_events', []);
+  const { user } = useAuth();
   
   const [filters, setFilters] = useState({
     search: '',
@@ -26,8 +27,6 @@ export default function EventsPage() {
     date: '',
     department: '',
   });
-  
-  const [user, setUser] = useState(null); // Assuming a user object is set up
   
   // Categories for filtering
   const categories = [
@@ -164,21 +163,39 @@ export default function EventsPage() {
   useEffect(() => {
     let result = [...events];
     
-    // Apply category filter
-    if (selectedCategory !== 'all') {
-      result = result.filter(event => event.category === selectedCategory);
-    }
-    
-    // Apply search filter
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      result = result.filter(
-        event => 
-          event.title.toLowerCase().includes(term) ||
-          event.description.toLowerCase().includes(term) ||
-          event.organizer.toLowerCase().includes(term)
-      );
-    }
+    // Filter by search, category, date, and department
+    result = result.filter(event => {
+      // Text search
+      if (filters.search && 
+          !event.title.toLowerCase().includes(filters.search.toLowerCase()) &&
+          !event.description.toLowerCase().includes(filters.search.toLowerCase())) {
+        return false;
+      }
+      
+      // Category filter
+      if (filters.category && event.category !== filters.category) {
+        return false;
+      }
+      
+      // Date filter
+      if (filters.date) {
+        const eventDate = new Date(event.date).toISOString().split('T')[0];
+        if (eventDate !== filters.date) {
+          return false;
+        }
+      }
+      
+      // Department filter - only show events for the user's department if selected
+      if (filters.department && user?.department) {
+        // If the event has a targetDepartment field, check if it matches the user's department
+        // If an event doesn't have a targetDepartment, it's for all departments
+        if (event.targetDepartment && event.targetDepartment !== user.department) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
     
     // Apply sorting
     switch (sortBy) {
@@ -199,7 +216,7 @@ export default function EventsPage() {
     }
     
     setFilteredEvents(result);
-  }, [events, searchTerm, selectedCategory, sortBy]);
+  }, [events, sortBy, filters, user]);
   
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -241,42 +258,6 @@ export default function EventsPage() {
       }
     }
   };
-  
-  // Apply filters to events
-  const filteredEvents = useMemo(() => {
-    return events.filter(event => {
-      // Text search
-      if (filters.search && 
-          !event.title.toLowerCase().includes(filters.search.toLowerCase()) &&
-          !event.description.toLowerCase().includes(filters.search.toLowerCase())) {
-        return false;
-      }
-      
-      // Category filter
-      if (filters.category && event.category !== filters.category) {
-        return false;
-      }
-      
-      // Date filter
-      if (filters.date) {
-        const eventDate = new Date(event.date).toISOString().split('T')[0];
-        if (eventDate !== filters.date) {
-          return false;
-        }
-      }
-      
-      // Department filter - only show events for the user's department if selected
-      if (filters.department && user?.department) {
-        // If the event has a targetDepartment field, check if it matches the user's department
-        // If an event doesn't have a targetDepartment, it's for all departments
-        if (event.targetDepartment && event.targetDepartment !== user.department) {
-          return false;
-        }
-      }
-      
-      return true;
-    });
-  }, [events, filters, user]);
   
   if (loading) {
     return (
