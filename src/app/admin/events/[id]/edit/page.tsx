@@ -31,7 +31,8 @@ export default function EditEventPage() {
     image: '/technical-event.svg',
     organizer: '',
     registrationDeadline: '',
-    capacity: 100
+    capacity: 100,
+    targetDepartment: '',
   });
   
   // Categories for selection
@@ -82,7 +83,8 @@ export default function EditEventPage() {
             image: data.event.image || `/images/${data.event.category}-event.svg`,
             organizer: data.event.organizer,
             registrationDeadline: formattedDeadline,
-            capacity: data.event.capacity
+            capacity: data.event.capacity,
+            targetDepartment: data.event.targetDepartment || '',
           });
         } else {
           throw new Error('Event not found');
@@ -153,7 +155,8 @@ export default function EditEventPage() {
         image: formData.image,
         organizer: formData.organizer,
         registrationDeadline: formData.registrationDeadline,
-        capacity: formData.capacity
+        capacity: formData.capacity,
+        targetDepartment: formData.targetDepartment,
       };
       
       // Call API to update event

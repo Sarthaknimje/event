@@ -268,45 +268,44 @@ export default function AdminDashboard() {
       
       <main className="flex-grow bg-gray-50 py-12">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center mb-10">
-            <h1 className="text-3xl md:text-4xl font-bold text-primary mb-4 md:mb-0">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold text-primary">
               Administrator Dashboard
             </h1>
-            
-            <div className="flex flex-wrap gap-4">
-              <Link href="/admin/events/create" className="btn-primary flex items-center">
-                <FaPlus className="mr-2" />
-                Create Event
-              </Link>
-              <div className="flex space-x-2">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleExportCSV}
-                  disabled={isExporting || allStudents.length === 0}
-                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-400"
-                >
-                  <FaFileCsv className="mr-2" />
-                  {isExporting ? 'Exporting...' : 'Export CSV'}
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleExportPDF}
-                  disabled={isExporting || allStudents.length === 0}
-                  className="flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:bg-gray-400"
-                >
-                  <FaFilePdf className="mr-2" />
-                  {isExporting ? 'Exporting...' : 'Export PDF'}
-                </motion.button>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="flex items-center px-4 py-2 border border-red-300 text-red-600 rounded-md hover:bg-red-50 transition-colors"
-              >
-                <FaSignOutAlt className="mr-2" />
-                Logout
+            <div className="flex space-x-2">
+              <button onClick={handleLogout} className="btn-outline flex items-center gap-2">
+                <FaSignOutAlt />
+                <span>Logout</span>
               </button>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap gap-4 mb-8">
+            <Link href="/admin/events/create" className="btn-primary flex items-center">
+              <FaPlus className="mr-2" />
+              Create Event
+            </Link>
+            <div className="flex space-x-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleExportCSV}
+                disabled={isExporting || allStudents.length === 0}
+                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-400"
+              >
+                <FaFileCsv className="mr-2" />
+                {isExporting ? 'Exporting...' : 'Export CSV'}
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleExportPDF}
+                disabled={isExporting || allStudents.length === 0}
+                className="flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:bg-gray-400"
+              >
+                <FaFilePdf className="mr-2" />
+                {isExporting ? 'Exporting...' : 'Export PDF'}
+              </motion.button>
             </div>
           </div>
           

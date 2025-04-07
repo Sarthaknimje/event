@@ -79,6 +79,7 @@ export async function POST(
       prn: user.prn,
       class: user.class,
       division: user.division,
+      department: user.department,
       registrationDate: new Date().toISOString()
     };
 

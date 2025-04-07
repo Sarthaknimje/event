@@ -7,6 +7,7 @@ const StudentRegistrationSchema = new Schema({
   prn: String,
   class: String,
   division: String,
+  department: String,
   registrationDate: {
     type: Date,
     default: Date.now,
@@ -61,6 +62,10 @@ const EventSchema = new Schema({
   registeredStudents: {
     type: [StudentRegistrationSchema],
     default: [],
+  },
+  targetDepartment: {
+    type: String,
+    required: false,
   },
   createdAt: {
     type: Date,

@@ -7,10 +7,10 @@ export async function POST(req: NextRequest) {
   try {
     await dbConnect();
     
-    const { name, email, password, prn, class: className, division, role } = await req.json();
+    const { name, email, password, prn, class: className, division, department, role } = await req.json();
     
     // Check if required fields are present
-    if (!name || !email || !password || !prn) {
+    if (!name || !email || !password || !prn || !className || !division || !department) {
       return NextResponse.json(
         { success: false, message: 'Missing required fields' },
         { status: 400 }
@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
       prn,
       class: className,
       division,
+      department,
       role: role || 'student',
       registeredEvents: []
     });

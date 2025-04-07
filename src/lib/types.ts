@@ -6,6 +6,7 @@ export interface Student {
   prn: string;
   class: string;
   division: string;
+  department: string;
   role: 'student' | 'admin';
   registeredEvents: string[];
   createdAt?: string;
@@ -24,6 +25,7 @@ export interface Event {
   registrationDeadline: string;
   capacity: number;
   registeredStudents: StudentRegistration[];
+  targetDepartment?: string;
   createdAt?: string;
 }
 
@@ -34,6 +36,7 @@ export interface StudentRegistration {
   prn: string;
   class: string;
   division: string;
+  department: string;
   registrationDate: string;
 }
 
@@ -74,4 +77,5 @@ export interface RegisterRequest {
   prn: string;
   class: string;
   division: string;
+  department: string;
 } 

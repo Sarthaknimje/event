@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { FaCalendarAlt, FaMapMarkerAlt, FaSearch, FaFilter, FaSort, FaUserFriends, FaInfoCircle, FaClock } from 'react-icons/fa';
@@ -19,6 +19,15 @@ export default function EventsPage() {
   const [sortBy, setSortBy] = useState('date');
   
   const [storedEvents] = useLocalStorage<Event[]>('pccoe_events', []);
+  
+  const [filters, setFilters] = useState({
+    search: '',
+    category: '',
+    date: '',
+    department: '',
+  });
+  
+  const [user, setUser] = useState(null); // Assuming a user object is set up
   
   // Categories for filtering
   const categories = [
@@ -233,6 +242,42 @@ export default function EventsPage() {
     }
   };
   
+  // Apply filters to events
+  const filteredEvents = useMemo(() => {
+    return events.filter(event => {
+      // Text search
+      if (filters.search && 
+          !event.title.toLowerCase().includes(filters.search.toLowerCase()) &&
+          !event.description.toLowerCase().includes(filters.search.toLowerCase())) {
+        return false;
+      }
+      
+      // Category filter
+      if (filters.category && event.category !== filters.category) {
+        return false;
+      }
+      
+      // Date filter
+      if (filters.date) {
+        const eventDate = new Date(event.date).toISOString().split('T')[0];
+        if (eventDate !== filters.date) {
+          return false;
+        }
+      }
+      
+      // Department filter - only show events for the user's department if selected
+      if (filters.department && user?.department) {
+        // If the event has a targetDepartment field, check if it matches the user's department
+        // If an event doesn't have a targetDepartment, it's for all departments
+        if (event.targetDepartment && event.targetDepartment !== user.department) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  }, [events, filters, user]);
+  
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -295,8 +340,8 @@ export default function EventsPage() {
                   type="text"
                   placeholder="Search events..."
                   className="input-field pl-10"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  value={filters.search}
+                  onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                 />
               </div>
               
@@ -307,34 +352,47 @@ export default function EventsPage() {
                 </div>
                 <select
                   className="input-field pl-10 appearance-none"
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  value={filters.category}
+                  onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
                 >
-                  {categories.map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
+                  <option value="">All Categories</option>
+                  <option value="technical">Technical</option>
+                  <option value="cultural">Cultural</option>
+                  <option value="sports">Sports</option>
+                  <option value="workshop">Workshop</option>
+                  <option value="seminar">Seminar</option>
                 </select>
               </div>
               
-              {/* Sort Options */}
+              {/* Date Filter */}
               <div className="md:w-64 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaSort className="text-gray-400" />
+                  <FaCalendarAlt className="text-gray-400" />
                 </div>
-                <select
-                  className="input-field pl-10 appearance-none"
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                >
-                  {sortOptions.map(option => (
-                    <option key={option.id} value={option.id}>
-                      {option.name}
-                    </option>
-                  ))}
-                </select>
+                <input
+                  type="date"
+                  className="input-field pl-10"
+                  value={filters.date}
+                  onChange={(e) => setFilters(prev => ({ ...prev, date: e.target.value }))}
+                />
               </div>
+              
+              {/* Department Filter */}
+              {user && (
+                <div className="md:w-64 relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FaUserFriends className="text-gray-400" />
+                  </div>
+                  <select
+                    className="input-field pl-10 appearance-none"
+                    value={filters.department}
+                    onChange={(e) => setFilters(prev => ({ ...prev, department: e.target.value }))}
+                  >
+                    <option value="">All Departments</option>
+                    <option value="my-department">Only My Department ({user.department})</option>
+                  </select>
+                </div>
+              )}
             </div>
           </motion.div>
           
@@ -348,7 +406,7 @@ export default function EventsPage() {
               <FaInfoCircle className="text-gray-400 text-5xl mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-700 mb-2">No events found</h3>
               <p className="text-gray-500">
-                {searchTerm ? (
+                {filters.search ? (
                   <>No events match your search criteria. Try adjusting your filters.</>
                 ) : (
                   <>No events are currently available in this category.</>

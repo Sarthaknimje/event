@@ -58,6 +58,7 @@ export default function EventPage({ params }: { params: { id: string } }) {
           prn: user.prn || 'N/A',
           class: user.class || 'N/A',
           division: user.division || 'N/A',
+          department: user.department || 'N/A',
           registrationDate: new Date().toISOString()
         };
         

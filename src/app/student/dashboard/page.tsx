@@ -136,6 +136,11 @@ export default function StudentDashboard() {
                       <span className="text-gray-700 font-medium mr-2">Division:</span>
                       <span className="text-gray-600">{user.division}</span>
                     </div>
+                    <div className="flex items-center">
+                      <FaBook className="mr-2 text-primary" />
+                      <span className="text-gray-700 font-medium mr-2">Department:</span>
+                      <span className="text-gray-600">{user.department}</span>
+                    </div>
                   </div>
                 </div>
                 

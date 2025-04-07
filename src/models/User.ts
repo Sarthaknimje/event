@@ -32,6 +32,10 @@ const UserSchema = new Schema({
     type: String,
     required: [true, 'Please provide a division'],
   },
+  department: {
+    type: String,
+    required: [true, 'Please provide a department'],
+  },
   role: {
     type: String,
     enum: ['student', 'admin'],

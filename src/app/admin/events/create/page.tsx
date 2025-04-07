@@ -27,7 +27,8 @@ export default function CreateEventPage() {
     image: '/technical-event.svg',
     organizer: '',
     registrationDeadline: '',
-    capacity: 100
+    capacity: 100,
+    targetDepartment: '',
   });
   
   // Categories for selection
@@ -121,7 +122,8 @@ export default function CreateEventPage() {
         image: formData.image,
         organizer: formData.organizer,
         registrationDeadline: formData.registrationDeadline,
-        capacity: formData.capacity
+        capacity: formData.capacity,
+        targetDepartment: formData.targetDepartment,
       };
       
       // Call API to create event
@@ -158,7 +160,8 @@ export default function CreateEventPage() {
         image: '/technical-event.svg',
         organizer: '',
         registrationDeadline: '',
-        capacity: 100
+        capacity: 100,
+        targetDepartment: '',
       });
       
       // Redirect to admin dashboard after a delay
@@ -384,6 +387,30 @@ export default function CreateEventPage() {
                     required
                   />
                 </div>
+              </div>
+              
+              {/* Target Department */}
+              <div>
+                <label htmlFor="targetDepartment" className="block text-sm font-medium text-gray-700 mb-1">
+                  Target Department (Optional)
+                </label>
+                <select
+                  id="targetDepartment"
+                  name="targetDepartment"
+                  className="input-field pl-10"
+                  value={formData.targetDepartment}
+                  onChange={handleChange}
+                >
+                  <option value="">All Departments</option>
+                  <option value="Computer">Computer Engineering</option>
+                  <option value="IT">Information Technology</option>
+                  <option value="ENTC">Electronics & Telecommunication</option>
+                  <option value="Mechanical">Mechanical Engineering</option>
+                  <option value="Civil">Civil Engineering</option>
+                  <option value="Electrical">Electrical Engineering</option>
+                  <option value="AI&DS">AI & Data Science</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">If specified, the event will be primarily shown to students from this department.</p>
               </div>
               
               {/* Event Image */}

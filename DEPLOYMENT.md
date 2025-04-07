@@ -1,164 +1,151 @@
-# Deploying PCCOE Event Management System to Vercel
+# PCCOE Events Application Deployment Guide
 
-This guide provides step-by-step instructions for deploying the PCCOE Event Management System to Vercel.
+This guide provides instructions for deploying the PCCOE Events application to a production environment using Vercel.
+
+## Table of Contents
+- [Prerequisites](#prerequisites)
+- [Deployment Options](#deployment-options)
+  - [Vercel Deployment](#vercel-deployment)
+  - [Manual Deployment](#manual-deployment)
+- [Environment Variables](#environment-variables)
+- [Database Setup](#database-setup)
+- [Testing Your Deployment](#testing-your-deployment)
+- [Troubleshooting](#troubleshooting)
 
 ## Prerequisites
 
-1. **GitHub Account**: Ensure your code is pushed to GitHub (which you've already done)
-2. **Vercel Account**: Sign up at [vercel.com](https://vercel.com)
-3. **MongoDB Atlas Account**: For the database
+Before deploying, ensure you have:
 
-## Setting up MongoDB Atlas
+1. A GitHub account (for Vercel deployment)
+2. A MongoDB Atlas account (for the database)
+3. The application code pushed to a GitHub repository
+4. Node.js and npm installed locally for testing
 
-1. **Create a MongoDB Atlas Account**:
-   - Go to [mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas)
-   - Sign up for a free account
+## Deployment Options
 
-2. **Create a Cluster**:
-   - Click "Build a Cluster"
-   - Choose the free tier option (M0)
-   - Select a cloud provider and region close to your users
-   - Click "Create Cluster"
+### Vercel Deployment
 
-3. **Set Up Database Access**:
-   - Go to the "Database Access" tab
-   - Click "Add New Database User"
-   - Create a username and password (save these securely)
-   - Set privileges to "Read and Write to Any Database"
-   - Click "Add User"
+#### Method 1: Using the Vercel Dashboard (Recommended)
 
-4. **Configure Network Access**:
-   - Go to the "Network Access" tab
-   - Click "Add IP Address"
-   - Choose "Allow Access from Anywhere" for development (you can restrict this later)
-   - Click "Confirm"
+1. Sign up or log in to [Vercel](https://vercel.com)
+2. Click "Add New" and select "Project"
+3. Import your GitHub repository containing the PCCOE Events application
+4. Configure project:
+   - Set the root directory to where your Next.js application is located (if not in the repository root)
+   - Framework preset: Next.js
+   - Build command: `npm run build`
+   - Output directory: `.next`
+5. Configure environment variables (see [Environment Variables](#environment-variables) section)
+6. Click "Deploy"
 
-5. **Get Connection String**:
-   - Wait for the cluster to be created
-   - Click "Connect"
-   - Choose "Connect your application"
-   - Copy the connection string
-   - Replace `<password>` with your database user's password
-   - Replace `<dbname>` with "pccoe-events" or your preferred name
+#### Method 2: Using Vercel CLI
 
-## Deploying to Vercel
-
-### Method 1: Using the Vercel Dashboard (Recommended)
-
-1. **Import Your GitHub Repository**:
-   - Go to [vercel.com/new](https://vercel.com/new)
-   - Select "Continue with GitHub" and authenticate
-   - Select the `Sarthaknimje/event` repository
-   - Choose the "pccoe-app" directory as the root
-
-2. **Configure Project Settings**:
-   - Project Name: Choose a name like "pccoe-event-management"
-   - Framework Preset: Select "Next.js"
-   - Root Directory: Set to "pccoe-app" if not already selected
-
-3. **Add Environment Variables**:
-   - Click "Environment Variables"
-   - Add `MONGODB_URI` with the connection string you obtained from MongoDB Atlas
-
-4. **Deploy**:
-   - Click "Deploy"
-   - Wait for the build to complete
-
-5. **Access Your Application**:
-   - Once deployed, Vercel will provide a URL like `https://pccoe-event-management.vercel.app`
-   - Your application is now live!
-
-### Method 2: Using the Vercel CLI
-
-1. **Install Vercel CLI**:
+1. Install Vercel CLI:
    ```bash
    npm install -g vercel
    ```
 
-2. **Login to Vercel**:
-   ```bash
-   vercel login
-   ```
-
-3. **Navigate to Your Project Directory**:
-   ```bash
-   cd /path/to/pccoe-app
-   ```
-
-4. **Deploy**:
+2. Navigate to your project directory and run:
    ```bash
    vercel
    ```
-   - Answer the prompts:
-     - Set up and deploy: Yes
-     - Link to existing project: No
-     - Project name: pccoe-event-management
-     - Directory: ./
-     - Override settings: No
 
-5. **Add Environment Variables**:
-   ```bash
-   vercel env add MONGODB_URI
-   ```
-   - Paste your MongoDB connection string
-   - Choose which environments to add this to (Production, Preview, Development)
+3. Follow the prompts to link to your Vercel account and configure your project
 
-6. **Redeploy with Environment Variables**:
+### Manual Deployment
+
+If not using Vercel, you can deploy the application to any platform that supports Node.js:
+
+1. Build the application:
    ```bash
-   vercel --prod
+   npm run build
    ```
 
-## Testing the Deployment
+2. Start the production server:
+   ```bash
+   npm start
+   ```
 
-1. **Verify the Application Loads**:
-   - Visit your Vercel deployment URL
-   - Check that the homepage loads correctly
+3. Set up a process manager like PM2 to keep the application running:
+   ```bash
+   npm install -g pm2
+   pm2 start npm --name "pccoe-events" -- start
+   ```
 
-2. **Test Authentication**:
-   - Try signing up as a new user
-   - Login with the created credentials
+## Environment Variables
 
-3. **Test Event Creation**:
-   - Login as an admin
-   - Create a new event
-   - Verify it appears on the events page
+Create the following environment variables in your deployment platform:
 
-4. **Test API Endpoints**:
-   - Use curl to test key API endpoints against your production URL
-   - Example: `curl https://your-app.vercel.app/api/users/export`
+```
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>
+NEXTAUTH_SECRET=your_random_secure_secret
+NEXTAUTH_URL=https://your-deployment-url.com
+NODE_ENV=production
+```
+
+Notes:
+- Replace placeholders with your actual MongoDB connection string
+- Generate a random secure string for NEXTAUTH_SECRET
+- Set NEXTAUTH_URL to your actual deployment URL
+
+## Database Setup
+
+1. Create a MongoDB Atlas cluster:
+   - Sign up or log in to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+   - Create a new cluster (free tier works for testing)
+   - Set up a database user with read/write permissions
+   - Whitelist all IP addresses (0.0.0.0/0) or specific IPs for your deployment
+
+2. Configure the connection string:
+   - In the Vercel dashboard, go to your project settings
+   - Add the MONGODB_URI environment variable with your connection string
+
+3. Initialize admin user:
+   - After deployment, create at least one admin user using the signup page
+   - You can use the provided script to create an admin user directly in the database
+
+## Testing Your Deployment
+
+After deployment, verify:
+
+1. Authentication works (signup and login)
+2. Admin and student dashboards load correctly
+3. Events can be created and managed by admins
+4. Students can register for events
+
+Use the `test-deployment.sh` script to quickly verify key endpoints:
+
+```bash
+./test-deployment.sh https://your-deployment-url.com
+```
+
+Look for the deployment status indicators on both admin and student dashboards to verify the deployment is working correctly.
 
 ## Troubleshooting
 
-- **Build Errors**: Check the build logs in Vercel for detailed error messages
-- **MongoDB Connection Issues**: Verify your connection string and network access settings
-- **Environment Variables**: Ensure they're correctly set in the Vercel dashboard
-- **Runtime Errors**: Check browser console and Vercel logs
+Common issues and solutions:
 
-## Updating Your Deployment
+1. **Database connection problems**
+   - Verify your MONGODB_URI is correct
+   - Check if your IP is whitelisted in MongoDB Atlas
+   - Ensure your database user has the correct permissions
 
-When you push changes to your GitHub repository, Vercel will automatically rebuild and deploy if you've set up continuous deployment.
+2. **Authentication issues**
+   - Check that NEXTAUTH_SECRET and NEXTAUTH_URL are set correctly
+   - Verify that your browser allows cookies for the deployed domain
 
-To manually trigger a redeploy:
-```bash
-vercel --prod
-```
+3. **Build failures**
+   - Check the build logs for specific errors
+   - Ensure all dependencies are properly installed
+   - Verify that your code doesn't have any TypeScript or ESLint errors
 
-## Custom Domain (Optional)
+4. **Missing environment variables**
+   - In the Vercel dashboard, go to your project settings
+   - Check that all required environment variables are set
 
-1. **Add a Custom Domain**:
-   - In the Vercel dashboard, go to your project
-   - Click "Settings" > "Domains"
-   - Add your domain
-   - Follow the instructions to configure DNS settings
+5. **Deployment appears blank or shows 404**
+   - Ensure the build completed successfully
+   - Check if the correct branch was deployed
+   - Verify routing in Next.js configuration
 
-## Security Considerations
-
-1. **Restrict MongoDB Access**:
-   - Update Network Access to only allow connections from your Vercel deployment
-   - Use environment-specific variables for different environments
-   
-2. **Enable Authentication**:
-   - Consider adding more robust authentication like NextAuth.js
-   
-3. **Regular Backups**:
-   - Set up automated backups for your MongoDB database 
+For more help, check the Vercel documentation or contact your system administrator. 

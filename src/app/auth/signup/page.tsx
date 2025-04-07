@@ -21,6 +21,7 @@ export default function SignupPage() {
     prn: '',
     class: '',
     division: '',
+    department: '',
     role: 'student'
   });
   
@@ -60,6 +61,7 @@ export default function SignupPage() {
     if (!formData.prn.trim()) newErrors.push('PRN is required');
     if (!formData.class) newErrors.push('Class is required');
     if (!formData.division) newErrors.push('Division is required');
+    if (!formData.department) newErrors.push('Department is required');
     
     return newErrors;
   };
@@ -256,6 +258,30 @@ export default function SignupPage() {
                         <option value="N/A">N/A</option>
                       </select>
                     </div>
+                  </div>
+                  
+                  {/* Department */}
+                  <div>
+                    <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
+                      Department
+                    </label>
+                    <select
+                      id="department"
+                      name="department"
+                      className="input-field"
+                      value={formData.department}
+                      onChange={handleChange}
+                    >
+                      <option value="">Select Department</option>
+                      <option value="Computer">Computer Engineering</option>
+                      <option value="IT">Information Technology</option>
+                      <option value="ENTC">Electronics & Telecommunication</option>
+                      <option value="Mechanical">Mechanical Engineering</option>
+                      <option value="Civil">Civil Engineering</option>
+                      <option value="Electrical">Electrical Engineering</option>
+                      <option value="AI&DS">AI & Data Science</option>
+                      <option value="Other">Other</option>
+                    </select>
                   </div>
                   
                   <div>
