@@ -1,0 +1,310 @@
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { FaUser, FaEnvelope, FaLock, FaIdCard, FaBook, FaUserFriends, FaExclamationCircle } from 'react-icons/fa';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+
+export default function SignupPage() {
+  const router = useRouter();
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    prn: '',
+    class: '',
+    division: ''
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const validateEmail = (email: string) => {
+    // PCCOE email validation (simple check for college domain)
+    return email.endsWith('@pccoepune.org');
+  };
+
+  const validatePRN = (prn: string) => {
+    // Simple PRN validation (10-digit number)
+    return /^\d{10}$/.test(prn);
+  };
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    
+    // Validate form
+    if (Object.values(formData).some(value => !value)) {
+      setError('Please fill in all fields');
+      return;
+    }
+    
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    
+    if (!validateEmail(formData.email)) {
+      setError('Please use your college email (example@pccoepune.org)');
+      return;
+    }
+    
+    if (!validatePRN(formData.prn)) {
+      setError('PRN should be a 10-digit number');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      
+      // Check if user already exists
+      const usersJson = localStorage.getItem('pccoe_users');
+      const users = usersJson ? JSON.parse(usersJson) : [];
+      
+      const existingUser = users.find((u: any) => u.email === formData.email || u.prn === formData.prn);
+      if (existingUser) {
+        setError('A user with this email or PRN already exists');
+        setLoading(false);
+        return;
+      }
+      
+      // Create new user
+      const newUser = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        prn: formData.prn,
+        class: formData.class,
+        division: formData.division,
+        role: 'student',
+        registeredEvents: []
+      };
+      
+      // Save to localStorage
+      users.push(newUser);
+      localStorage.setItem('pccoe_users', JSON.stringify(users));
+      
+      // Auto login the new user
+      localStorage.setItem('pccoe_current_user', JSON.stringify({
+        email: newUser.email,
+        name: newUser.name,
+        prn: newUser.prn,
+        class: newUser.class,
+        division: newUser.division,
+        role: newUser.role
+      }));
+      
+      // Redirect to student dashboard
+      router.push('/student/dashboard');
+      
+    } catch (err) {
+      console.error('Signup error:', err);
+      setError('An error occurred during registration. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      
+      <main className="flex-grow flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center">
+            <h2 className="mt-6 text-3xl font-extrabold text-primary">
+              Create your account
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Already have an account?{' '}
+              <Link href="/auth/login" className="font-medium text-secondary hover:text-secondary/80">
+                Sign in
+              </Link>
+            </p>
+          </div>
+          
+          <form className="mt-8 space-y-6" onSubmit={handleSignup}>
+            {error && (
+              <div className="bg-red-50 text-red-500 p-3 rounded-md flex items-center space-x-2">
+                <FaExclamationCircle />
+                <span>{error}</span>
+              </div>
+            )}
+            
+            <div className="space-y-4">
+              {/* Full Name */}
+              <div className="relative">
+                <label htmlFor="name" className="sr-only">
+                  Full Name
+                </label>
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaUser className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  required
+                  className="input-field pl-10 py-3 rounded-md"
+                  placeholder="Full Name"
+                  value={formData.name}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              {/* Email */}
+              <div className="relative">
+                <label htmlFor="email" className="sr-only">
+                  College Email
+                </label>
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaEnvelope className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  className="input-field pl-10 py-3 rounded-md"
+                  placeholder="College Email"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              {/* PRN */}
+              <div className="relative">
+                <label htmlFor="prn" className="sr-only">
+                  PRN Number
+                </label>
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaIdCard className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="prn"
+                  name="prn"
+                  type="text"
+                  required
+                  className="input-field pl-10 py-3 rounded-md"
+                  placeholder="PRN Number"
+                  value={formData.prn}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              {/* Class */}
+              <div className="relative">
+                <label htmlFor="class" className="sr-only">
+                  Class
+                </label>
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaBook className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="class"
+                  name="class"
+                  type="text"
+                  required
+                  className="input-field pl-10 py-3 rounded-md"
+                  placeholder="Class (e.g., TE, BE)"
+                  value={formData.class}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              {/* Division */}
+              <div className="relative">
+                <label htmlFor="division" className="sr-only">
+                  Division
+                </label>
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaUserFriends className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="division"
+                  name="division"
+                  type="text"
+                  required
+                  className="input-field pl-10 py-3 rounded-md"
+                  placeholder="Division (e.g., A, B)"
+                  value={formData.division}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              {/* Password */}
+              <div className="relative">
+                <label htmlFor="password" className="sr-only">
+                  Password
+                </label>
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaLock className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  className="input-field pl-10 py-3 rounded-md"
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              {/* Confirm Password */}
+              <div className="relative">
+                <label htmlFor="confirmPassword" className="sr-only">
+                  Confirm Password
+                </label>
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaLock className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  required
+                  className="input-field pl-10 py-3 rounded-md"
+                  placeholder="Confirm Password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="group relative w-full btn-primary py-3"
+              >
+                {loading ? 'Creating account...' : 'Create account'}
+              </button>
+            </div>
+            
+            <div className="text-sm text-center text-gray-600">
+              By creating an account, you agree to our{' '}
+              <Link href="/terms-of-service" className="font-medium text-primary hover:text-primary/80">
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link href="/privacy-policy" className="font-medium text-primary hover:text-primary/80">
+                Privacy Policy
+              </Link>
+            </div>
+          </form>
+        </div>
+      </main>
+      
+      <Footer />
+    </div>
+  );
+} 
